@@ -1,0 +1,5 @@
+.env 
+venv/
+testing.ipynb
+tests/
+tests/*

@@ -1,0 +1,13 @@
+README.md
+setup.py
+marshal/__init__.py
+marshal/core/__init__.py
+marshal/core/agent.py
+marshal/core/llm.py
+marshal/llms/__init__.py
+marshal/llms/gpt.py
+marshal/tools/__init__.py
+marshall.egg-info/PKG-INFO
+marshall.egg-info/SOURCES.txt
+marshall.egg-info/dependency_links.txt
+marshall.egg-info/top_level.txt
