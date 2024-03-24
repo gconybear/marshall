@@ -2,7 +2,9 @@
 
 --------
 
-Research has shown that many AI applications can benefit from 1) encouraging the underlying LLMs to employ Chain-of-Thought (CoT) reasoning and 2) equipping LLM pipelines with external tools. `Marshall` implements a simple pipeline that starts with a task/query passed to an agent. The agent (and any downstream agent – the process is recursive) has three options:
+[Research](https://arxiv.org/abs/2201.11903) [has](https://arxiv.org/abs/2402.05120) [shown](https://arxiv.org/abs/2309.07864) that many AI applications can benefit from 1) encouraging the underlying LLMs to employ Chain-of-Thought (CoT) reasoning and 2) equipping LLM pipelines with external tools. 
+
+`Marshall` implements a simple pipeline that starts with a task/query passed to an agent. The agent (and any downstream agent – the process is recursive) has three options:
 
 - `dispatch`: break task town into a series of sub-tasks that are passed to sub-agents
 - `answer`: directly answer the question 
@@ -65,9 +67,6 @@ ag = Agent(
          config={"temperature": 0.2, "response_format": {'type': 'json_object'}}), 
     toolkit=tk
 ) 
-
-
-
 ```
 
 
