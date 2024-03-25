@@ -1,6 +1,9 @@
-# Marshall - a generalized lightweight framework for orchestrating AI agents and sub-agents 
+# Marshall - a recursive framework for orchestrating AI agents and sub-agents 
 
---------
+![Marshall](marshall/assets/marshall_dalle.png) 
+
+-------- 
+
 
 [Research](https://arxiv.org/abs/2201.11903) [has](https://arxiv.org/abs/2402.05120) [shown](https://arxiv.org/abs/2309.07864) that many AI applications can benefit from 1) encouraging the underlying LLMs to employ Chain-of-Thought (CoT) reasoning and 2) equipping LLM pipelines with external tools. 
 
@@ -15,7 +18,6 @@ The process runs recursively until all tasks/sub-tasks are completed – all in
 ------- 
 
 ## Example
-
 
 
 

@@ -13,7 +13,7 @@ class GPT(LLM):
         
         self.completion_url = "https://api.openai.com/v1/chat/completions"  
         self.embedding_url = "https://api.openai.com/v1/embeddings"
-        self.system_instructions = []  
+        self.system_instructions = []   
 
         if sys_instructions: 
             self.add_sys_instructions(sys_instructions)
@@ -40,7 +40,14 @@ class GPT(LLM):
         p = {
             "model": self.model_name,
             "messages": self.system_instructions + [{"role": "user", "content": prompt}],
-        }  
+        }   
+
+        if self.config.get('json', False): 
+            # json=True is just for convenience, actual format is added below
+            del self.config['json']   
+            
+            # restricting output type to json 
+            self.config.update({"response_format": {'type': 'json_object'}})
 
         p.update(self.config)
 

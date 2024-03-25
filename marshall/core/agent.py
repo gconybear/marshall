@@ -14,7 +14,12 @@ class Agent:
         """
 
         self.base_model = base_model
-        self.subagent_model = subagent_model
+        self.subagent_model = subagent_model 
+        
+        # base and subagent models need to return json 
+        self.base_model.config.update({'json': True}) 
+        self.subagent_model.config.update({'json': True})
+
         self.refiner_model = refiner_model   
         self.toolkit = toolkit  
 
