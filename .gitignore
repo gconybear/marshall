@@ -3,3 +3,4 @@ venv/
 testing.ipynb
 tests/
 tests/*
+**/__pycache__/
