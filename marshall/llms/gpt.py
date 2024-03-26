@@ -1,15 +1,22 @@
 import requests 
 import json   
-import httpx
+
+# dotenv 
+import os 
+from dotenv import load_dotenv
+load_dotenv()
 
 # local 
 from marshall.core.llm import LLM
 
 class GPT(LLM): 
 
-    def __init__(self, model_name: str, api_key=None, config={}, sys_instructions=None) -> None: 
+    def __init__(self, model_name: str, config={}, sys_instructions=None) -> None: 
 
-        super().__init__(model_name, api_key, config if config is not None else {})
+        super().__init__(model_name, config if config is not None else {}) 
+
+        self.api_key = os.getenv("OPENAI_API_KEY") 
+        assert self.api_key is not None, "No api key found, make sure you have an environment variable called 'OPENAI_API_KEY'"
         
         self.completion_url = "https://api.openai.com/v1/chat/completions"  
         self.embedding_url = "https://api.openai.com/v1/embeddings"
@@ -45,7 +52,7 @@ class GPT(LLM):
         if self.config.get('json', False): 
             # json=True is just for convenience, actual format is added below
             del self.config['json']   
-            
+
             # restricting output type to json 
             self.config.update({"response_format": {'type': 'json_object'}})
 
