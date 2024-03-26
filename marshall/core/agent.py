@@ -40,7 +40,7 @@ class Agent:
         You MUST return a JSON object with the following structure: 
 
         - `decision`: a str of the decision you made – one of "dispatch", "answer", or "code_execute"
-        - `content`: If decision == "dispatch", then this is a list of strings where each string is a clear and comprehensive instruction for a subagent to follow. If decision == "answer", then this is a string that is the direct answer to the user's question. If decision == "code_execute", then this is a executable code in the form of a python string – the code **MUST** store the final result in a variable called `result`.
+        - `content`: If decision == "dispatch", then this is a list of strings where each string is a clear and comprehensive instruction for a subagent to follow. If decision == "answer", then this is a string that is the direct answer to the user's question. If decision == "code_execute", then this is a executable code in the form of a python string – the code **MUST** store the final result in a variable called `result`. It is crucial that the code execution output be in a variable called `result`! DO NOT FORGET.
         """ 
 
         if self.toolkit: 
@@ -72,7 +72,90 @@ class Agent:
             source = fdetails['source']
             code += f"{source}\n\n"
 
-        return code
+        return code 
+    
+    def make_decision1(self, task: str, agent='base'):  
+
+        """
+        protocol: 
+
+        1. task is passed in 
+        2. self.result_log contains previous info 
+        - if no prev agent, just user task and sys instructions 
+        - if prev agent: 
+            - (meta task, current task, result, next task) for each step 
+
+        """
+        out = {}  
+        log_separator = "\n--------\n"
+
+        if agent == 'base':
+            self.current_agent = self.base_model  
+        else:
+            self.current_agent = self.subagent_model 
+
+        # append prev results to sys history 
+        if self.result_log: 
+            self.current_agent.add_sys_instructions("**RESULT LOG**\n\n" + self.result_log + log_separator)  
+
+        # now, we need to chop off middle part of sys instructions 
+        refined_instructions = [self.current_agent.system_instructions[0], self.current_agent.system_instructions[-1]] 
+        self.current_agent.system_instructions = refined_instructions
+
+        # generate decision 
+        print('about to generate')
+        res = self.current_agent.generate(task)   
+        print('generated')
+        mssg = json.loads(res['message'])
+        
+        decision = mssg['decision'] 
+
+        assert decision in ('dispatch', 'code_execute', 'answer'), f"Agent decision needs to be one of 'dispatch', 'code_execute', 'answer' – got {decision}"  
+
+        ########
+
+        if decision == "answer":
+            out['success'] = True 
+            out['message'] = f"The task was: {task}\n\nThe answer provided was: {mssg['content']}" 
+            out['done'] = True 
+
+            self.result_log += f"Directive: {task}\nResult: {mssg['content']}" + log_separator
+
+        elif decision == "code_execute": 
+            # execute code  
+            tool_imports = self.build_tool_import_str(self.toolkit.tool_dict)  
+            print("code to be run: ", mssg['content'])
+            code_str = tool_imports + mssg['content']
+            
+            namespace = {} 
+            exec(code_str, namespace)  
+            result = namespace.get('result', None)
+
+            if result: 
+                out['success'] = True
+            else: 
+                out['success'] = False  
+
+                print('code execution failed... trying again') 
+
+                revised_task = f"The following code execution (for the task {task}) did NOT work: {code_str}\n\nPlease try again and remember to store the final output in a variable called `result`)." 
+                self.make_decision1(task=revised_task, agent='sub')
+
+            out['message'] = f"The task was: {task}\n\nThe following code was executed: \n\n{code_str}\n\nThe result was: {result}" 
+
+            out['done'] = True  
+
+            self.result_log += f"Directive: {task}\nProcess: executed the following code ```python\n{mssg['content']}\n```\nResult: {result}" + log_separator
+
+        # else, task was dispatched 
+        else:
+            out['success'] = True
+            out['message'] = mssg['content']
+            out['done'] = False  
+
+            self.result_log += f"Directive: {task}\nResult: dispatched the following sub-tasks – {', '.join(mssg['content'])}" + log_separator
+
+        return out 
 
     def make_decision(self, task, agent='base'): 
 
@@ -90,7 +173,7 @@ class Agent:
             self.current_agent = self.subagent_model   
 
         if self.result_log: 
-            self.current_agent.add_sys_instructions("You have received the following previous inputs from other agents to aid in your decision making: \n\n" + self.result_log + "\n\n--------\n\n")
+            self.current_agent.add_sys_instructions("You have received the following previous inputs from other agents to aid in your decision making:\n\n" + self.result_log + "\n\n--------\n\n")
 
 
         res = self.current_agent.generate(task)  
@@ -103,10 +186,12 @@ class Agent:
             
             # set current agent subagent 
             out['success'] = True
-            out['message'] = [f"Your sub-task is: " + x for x in mssg['content']] # just the list of str instructions with meta task concatenated on 
+            out['message'] = mssg['content']
             out['done'] = False  
 
-            self.result_log += 'The following sub-tasks were given: ' + ', '.join(out['message']) + "\n\n--------\n\n" 
+            self.result_log += 'The following sub-tasks were dispatched: ' + ', '.join(out['message']) + "\n\n--------\n\n"  
+
+            out['message'] = [f"Your sub-task is: " + x for x in mssg['content']] # just the list of str instructions with meta task concatenated on 
 
         if decision == "code_execute": 
             # execute code  
@@ -131,7 +216,7 @@ class Agent:
 
         if decision == "answer":
             out['success'] = True 
-            out['message'] = f"The task was: {task}\n\nThe answer was: {mssg['content']}" 
+            out['message'] = f"The task was: {task}\n\nThe answer provided was: {mssg['content']}" 
             out['done'] = True
         
             self.result_log += out['message'] + "\n\n--------\n\n"  
@@ -139,7 +224,31 @@ class Agent:
         self.logging.append(out)
 
         # final result object: dict with 'success' key, 'message' key, 'done' key 
-        return out  
+        return out   
+    
+    def build_log(self, task: str, subagents=False):  
+
+        print(f"The following task came in: {task}")
+
+        done = False  
+        current_task = task 
+        while not done: 
+
+            res = self.make_decision1(task=current_task, agent='base' if not subagents else 'sub') 
+            print(f"Got result. Done={res.get('done')} | Success={res.get('success')} | Content={res.get('message')}")
+
+            if not res.get('done', True): 
+                # subtasks are a list of strings under `message` key 
+                subtasks = res['message'] 
+                for t in subtasks: 
+                    self.build_log(task=t, subagents=True)  
+
+                done = True 
+                break 
+            else: 
+                print('DONE') 
+                done = True 
+                break 
     
     def build_scratchpad(self, task, subagents=False): 
 
