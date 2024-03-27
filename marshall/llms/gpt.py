@@ -20,7 +20,9 @@ class GPT(LLM):
         
         self.completion_url = "https://api.openai.com/v1/chat/completions"  
         self.embedding_url = "https://api.openai.com/v1/embeddings"
-        self.system_instructions = []   
+        self.system_instructions = []    
+
+        self.name = 'chatgpt'
 
         if sys_instructions: 
             self.add_sys_instructions(sys_instructions)

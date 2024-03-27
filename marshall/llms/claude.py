@@ -24,7 +24,8 @@ class Claude(LLM):
         assert self.api_key is not None, "No api key found, make sure you have an environment variable called 'ANTHROPIC_API_KEY'" 
 
         self.messages_url = 'https://api.anthropic.com/v1/messages'   
-        self.system_instructions = []
+        self.system_instructions = [] 
+        self.name = 'claude'
 
     def api_call(self, payload: dict, version='2023-06-01') -> dict:   
         
@@ -40,9 +41,13 @@ class Claude(LLM):
     
     def add_sys_instructions(self, instructions: str):  
 
-        if instructions: self.system_instructions.append({"role": "assistant", "content": instructions}) 
+        if instructions: self.system_instructions.append({"role": "assistant", "content": instructions})  
     
-    def generate(self, prompt: str, max_tokens=1024) -> str: 
+    def add_user_instructions(self, mssg: str):  
+
+        if mssg: self.system_instructions.append({"role": "user", "content": mssg})
+    
+    def generate(self, prompt: str, max_tokens=1024, verbose=False) -> str: 
 
         mssg = self.system_instructions + [{"role": 'user', "content": prompt}] 
 
@@ -60,7 +65,10 @@ class Claude(LLM):
 
         data.update(self.config)
 
-        res = self.api_call(payload=json.dumps(data)) 
+        res = self.api_call(payload=json.dumps(data))   
+
+        if verbose: 
+            print(res)
 
         return res.get('content', [{}])[0].get('text')
     

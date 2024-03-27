@@ -1,4 +1,4 @@
-# Marshall – a recursive framework for orchestrating AI agents and sub-agents 
+# Marshall – frameworks for orchestrating AI agents 
 
 ![Marshall](marshall/assets/marshall_dalle.png) 
 
