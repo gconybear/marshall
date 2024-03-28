@@ -63,8 +63,11 @@ class GPT(LLM):
         payload = json.dumps(p)  
 
         response = self.api_call(payload=payload, url=self.completion_url) 
-        if 'choices' not in response: 
-            return {'success': False, 'message': None, 'response': response} 
+        if 'choices' not in response:  
+            return None
+            #return {'success': False, 'message': None, 'response': response}  
         
-        return {'success': True, 
-                'message': response['choices'][0]['message']['content']}
+        return response['choices'][0]['message']['content']
+        
+        # return {'success': True, 
+        #         'message': response['choices'][0]['message']['content']}

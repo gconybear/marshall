@@ -73,3 +73,10 @@ ag = Agent(
 ```
 
 
+TODO
+
+- [ ] build out delegation pipeline 
+- [ ] expand toolkit for use in both ensemble and delegation pipelines 
+- [ ] rag func examples 
+
+

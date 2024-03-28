@@ -9,7 +9,7 @@ def embed_text(text: str, model='text-embedding-3-small'):
 
     "basic function that just uses gpt class to get 'text-embedding-3-small' embedding"
 
-    ai = GPT() 
+    ai = GPT(model_name=None) 
 
     url = 'https://api.openai.com/v1/embeddings'   
     # Headers

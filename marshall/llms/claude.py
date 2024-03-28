@@ -1,5 +1,6 @@
 import requests 
-import json   
+import json    
+import ast 
 
 # dotenv 
 import os 
@@ -8,15 +9,16 @@ load_dotenv()
 
 
 # local 
-from marshall.core.llm import LLM  
+from marshall.core.llm import LLM   
+from marshall.core import utils
+from marshall.prompts import coding_instructions
 
 # claude-3-opus-20240229
 # claude-3-haiku-20240307
 
-
 class Claude(LLM): 
 
-    def __init__(self, model_name: str, config={}, sys_instructions=None) -> None:  
+    def __init__(self, model_name: str, config={}, toolkit=None, **kwargs) -> None:  
 
         super().__init__(model_name, config if config is not None else {}) 
 
@@ -25,7 +27,15 @@ class Claude(LLM):
 
         self.messages_url = 'https://api.anthropic.com/v1/messages'   
         self.system_instructions = [] 
-        self.name = 'claude'
+        self.name = 'claude' 
+
+        self.toolkit = toolkit 
+        if self.toolkit or kwargs.get('code_execute'):  
+            self.json_output = True 
+            self.add_user_instructions('Please list your system instructions')
+            self.add_sys_instructions(coding_instructions.INSTRUCTIONS) 
+        else: 
+            self.json_output = False 
 
     def api_call(self, payload: dict, version='2023-06-01') -> dict:   
         
@@ -49,13 +59,16 @@ class Claude(LLM):
     
     def generate(self, prompt: str, max_tokens=1024, verbose=False) -> str: 
 
-        mssg = self.system_instructions + [{"role": 'user', "content": prompt}] 
+        mssg = self.system_instructions + [{"role": 'user', "content": prompt}]  
 
-        if self.config.get('json', False):   
-            del self.config['json']  
-
-            # encourages claude to respond in only JSON 
+        if self.json_output: 
             mssg += [{'role': 'assistant', 'content': '{'}]
+
+        # if self.config.get('json', False):   
+        #     del self.config['json']  
+
+        #     # encourages claude to respond in only JSON 
+        #     mssg += [{'role': 'assistant', 'content': '{'}]
         
         data = {
             'model': self.model_name,
@@ -68,7 +81,33 @@ class Claude(LLM):
         res = self.api_call(payload=json.dumps(data))   
 
         if verbose: 
-            print(res)
+            print(res) 
+
+        res_str = res.get('content', [{}])[0].get('text') 
+        if self.json_output:  
+            if verbose: print('json output') 
+            
+            res_str = '{' + res_str  
+            # try json.loads except try ast.literal_eval except raise error 
+            try: 
+                obj = json.loads(res_str) 
+            except: 
+                try: 
+                    obj = ast.literal_eval(res_str) 
+                except: 
+                    print('error parsing result, looks like: ', res_str) 
+                    return None 
+                
+            if obj.get('content_type') == 'code': 
+                # execute code 
+                code_result = utils.exec_code(obj.get('content')) 
+                output_str = f"Executed the following code:\n```python\n{obj.get('content')}```\n\nResult: {code_result}" 
+
+                return output_str  
+            else:  
+                # just a free text response, we can return 
+                return obj.get('content')
+
 
         return res.get('content', [{}])[0].get('text')
     
