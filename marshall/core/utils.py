@@ -17,7 +17,30 @@ def exec_code(code):
         }
         exec(code, namespace)
         output = buf.getvalue()
-    return output
+    return output 
+
+def get_tool_str(tool_dict: dict) -> str: 
+
+    tool_str = ""
+    for tool_name, tool_details in tool_dict.items(): 
+        tool_str += f"Name: {tool_name}\nDescription: {tool_details.get('desc', '')}\nSource:\n```python\n{tool_details.get('source', '')}```\n\n" 
+
+    return tool_str 
+
+def build_tool_import_str(tk: dict) -> str: 
+    """
+    builds an executable python string that imports all tools in the toolkit
+    """
+
+    code = ""
+    for fname, fdetails in tk.items():
+        code += f"# {fname}\n"
+        description = fdetails['desc'].replace('\n', '')
+        code += f"# {description}\n"
+        source = fdetails['source']
+        code += f"{source}\n\n"
+
+    return code 
 
 
 # def exec_code(code: str):

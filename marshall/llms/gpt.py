@@ -34,7 +34,18 @@ class GPT(LLM):
             self.json_output = True 
             self.add_sys_instructions(coding_instructions.INSTRUCTIONS)
         else: 
-            self.json_output = False
+            self.json_output = False 
+
+        if self.toolkit: 
+            # add instructions for how to use tools 
+            tool_desc = utils.get_tool_str(self.toolkit.tool_dict) 
+            tool_str = "You also have access to the following tools (python functions available in your environment), use these as needed whenever you want: " + tool_desc + "\n\n-------\nIf/when you use these tools, make sure to still store the final output in a variabled called `result`"
+            self.add_sys_instructions(tool_str) 
+            # store exectuable tool import str 
+            self.tool_import_str = utils.build_tool_import_str(self.toolkit.tool_dict)
+        else: 
+            self.tool_import_str = ''
+        
 
     def api_call(self, payload: dict, url: str) -> dict:  
         
@@ -85,13 +96,14 @@ class GPT(LLM):
                     obj = ast.literal_eval(res_str) 
                 except: 
                     print('error parsing result, looks like: ', res_str) 
-                    return None 
+                    return res_str 
                 
             if obj.get('content_type') == 'code': 
                 # execute code 
-                if verbose: print('executing: ', obj.get('content'))
-                code_result = utils.exec_code(obj.get('content')) 
-                output_str = f"Executed the following code:\n```python\n{obj.get('content')}```\n\nResult: {code_result}" 
+                if verbose: print('executing: ', obj.get('content')) 
+                code_str = self.tool_import_str + obj.get('content', "result = 'No code provided'")
+                code_result = utils.exec_code(code_str) 
+                output_str = f"Executed the following code:\n```python\n{code_str}```\n\nResult: {code_result}" 
 
                 return output_str  
             else:  

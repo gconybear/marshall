@@ -30,12 +30,12 @@ class HomogeneousEnsemble:
         self.num_base_agents = num_base_agents 
         self.refinement_strategy = refinement_strategy 
         if self.refinement_strategy == 'agent':  
-            if kwargs.get('refinement_agent'): 
-                self.refiner_agent = kwargs.get('refinement_agent') 
-            else:
-                self.refiner_agent = copy.deepcopy(base_agents)    
+            # Check if 'refinement_agent' is provided in kwargs when refinement_strategy is 'agent'
+            if 'refinement_agent' not in kwargs: 
+                raise ValueError("When refinement_strategy is 'agent', a 'refinement_agent' must be provided in kwargs")
+            self.refiner_agent = kwargs['refinement_agent']
         else: 
-            self.refiner_agent = None 
+            self.refiner_agent = None
 
         self.toolkit = toolkit
         if self.toolkit:  
@@ -73,7 +73,7 @@ class HomogeneousEnsemble:
         max_avg_sim_index = avg_similarities.index(max(avg_similarities))
         return answers[max_avg_sim_index]
 
-    def run(self, query: str, verbose=False) -> str:  
+    def run(self, query: str, verbosity=0) -> str:  
 
         """
         - pass query to self.num_base_agents base agents with temperature = 1
@@ -88,20 +88,21 @@ class HomogeneousEnsemble:
             ans = self.base_agents.generate(query)  
             list_responses.append(ans)
             responses += f"\nAgent {i+1}: {ans}\n\n---------"  
-            if verbose: print(f'agent {i+1} answered')
+            if verbosity > 0: print(f'agent {i+1} answered') 
+            if verbosity > 1: print(ans)
 
         self.responses = responses    
 
         # 2. refine 
         if self.refinement_strategy == 'similarity':  
-            if verbose: print('refining via similarity')
+            if verbosity > 0: print('refining via similarity')
             return self.similarity_refinement(list_responses)
         
         if self.refinement_strategy == 'agent': 
-            if verbose: print('refining through agent')
+            if verbosity > 0: print('refining through agent')
 
             if self.refiner_agent.name == 'claude': 
-                # user message needs to be first 
+                # user message needs to be first with claude calls 
                 self.refiner_agent.add_user_instructions(mssg=query) 
 
             self.refiner_agent.add_sys_instructions(f"Below is the output of {self.num_base_agents} agents to the query: {query}\n\n{responses}\n\nBased on these outputs and the original query, please provide a clear and concise answer to the original query. Make sure your answer is not just a summary of the above outputs, but an actual answer to the original question.") 

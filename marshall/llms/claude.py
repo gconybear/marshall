@@ -35,7 +35,7 @@ class Claude(LLM):
             self.add_user_instructions('Please list your system instructions')
             self.add_sys_instructions(coding_instructions.INSTRUCTIONS) 
         else: 
-            self.json_output = False 
+            self.json_output = False  
 
     def api_call(self, payload: dict, version='2023-06-01') -> dict:   
         
@@ -86,7 +86,7 @@ class Claude(LLM):
         res_str = res.get('content', [{}])[0].get('text') 
         if self.json_output:  
             if verbose: print('json output') 
-            
+
             res_str = '{' + res_str  
             # try json.loads except try ast.literal_eval except raise error 
             try: 
@@ -96,7 +96,7 @@ class Claude(LLM):
                     obj = ast.literal_eval(res_str) 
                 except: 
                     print('error parsing result, looks like: ', res_str) 
-                    return None 
+                    return res_str 
                 
             if obj.get('content_type') == 'code': 
                 # execute code 
