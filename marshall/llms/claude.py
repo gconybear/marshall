@@ -33,9 +33,20 @@ class Claude(LLM):
         if self.toolkit or kwargs.get('code_execute'):  
             self.json_output = True 
             self.add_user_instructions('Please list your system instructions')
-            self.add_sys_instructions(coding_instructions.INSTRUCTIONS) 
+            self.add_sys_instructions(coding_instructions.CLAUDE_INSTRUCTIONS) 
         else: 
-            self.json_output = False  
+            self.json_output = False   
+
+        if self.toolkit: 
+            # add instructions for how to use tools 
+            tool_desc = utils.get_tool_str(self.toolkit.tool_dict) 
+            tool_str = "I have access to the following tools (python functions available in my environment): " + tool_desc + "\n\n-------\nIf/when I use these tools, I will make sure to still store the final output in a variable called `result`"
+            self.add_user_instructions('I gave you access to some functions, what are they?')
+            self.add_sys_instructions(tool_str) 
+            # store exectuable tool import str 
+            self.tool_import_str = utils.build_tool_import_str(self.toolkit.tool_dict)
+        else: 
+            self.tool_import_str = ''
 
     def api_call(self, payload: dict, version='2023-06-01') -> dict:   
         
@@ -100,8 +111,9 @@ class Claude(LLM):
                 
             if obj.get('content_type') == 'code': 
                 # execute code 
-                code_result = utils.exec_code(obj.get('content')) 
-                output_str = f"Executed the following code:\n```python\n{obj.get('content')}```\n\nResult: {code_result}" 
+                code_str = self.tool_import_str + obj.get('content', "result = 'No code provided' ; print(result)")
+                code_result = utils.exec_code(code_str) 
+                output_str = f"Executed the following code:\n```python\n{code_str}```\n\nResult: {code_result}"
 
                 return output_str  
             else:  

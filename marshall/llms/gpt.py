@@ -39,7 +39,7 @@ class GPT(LLM):
         if self.toolkit: 
             # add instructions for how to use tools 
             tool_desc = utils.get_tool_str(self.toolkit.tool_dict) 
-            tool_str = "You also have access to the following tools (python functions available in your environment), use these as needed whenever you want: " + tool_desc + "\n\n-------\nIf/when you use these tools, make sure to still store the final output in a variabled called `result`"
+            tool_str = "You also have access to the following tools (python functions available in your environment), use these as needed whenever you want: " + tool_desc + "\n\n-------\nIf/when you use these tools, make sure to still store the final output in a variable called `result`"
             self.add_sys_instructions(tool_str) 
             # store exectuable tool import str 
             self.tool_import_str = utils.build_tool_import_str(self.toolkit.tool_dict)
@@ -101,7 +101,7 @@ class GPT(LLM):
             if obj.get('content_type') == 'code': 
                 # execute code 
                 if verbose: print('executing: ', obj.get('content')) 
-                code_str = self.tool_import_str + obj.get('content', "result = 'No code provided'")
+                code_str = self.tool_import_str + obj.get('content', "result = 'No code provided' ; print(result)")
                 code_result = utils.exec_code(code_str) 
                 output_str = f"Executed the following code:\n```python\n{code_str}```\n\nResult: {code_result}" 
 

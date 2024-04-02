@@ -8,23 +8,20 @@
 
 [Research](https://arxiv.org/abs/2201.11903) [has](https://arxiv.org/abs/2402.05120) [shown](https://arxiv.org/abs/2309.07864) that many AI applications can benefit from 1) encouraging the underlying LLMs to employ Chain-of-Thought (CoT) reasoning and 2) equipping LLM pipelines with external tools. 
 
-`Marshall` implements a simple pipeline that starts with a task/query passed to an agent. The agent (and any downstream agent – the process is recursive) has three options:
+`Marshall` is an orchestration framework for building multi-agent LLM pipelines. 
 
-- `dispatch`: break task town into a series of sub-tasks that are passed to sub-agents
-- `answer`: directly answer the question 
-- `code_execute`: write and execute some arbitrary code
 
-The process runs recursively until all tasks/sub-tasks are completed – all intermediary results are stored in a single string which is finally passed into a *refiner* agent which is simply tasked with summarzing all the work done to provide a cohesive answer to the users original question. 
+Currently, the following pipelines are built out: 
+
+- Delegation: A task/query is passed to a base agent. The agent (and any downstream agent – the process is recursive) has two options: `dispatch` (break the problem into steps and assign to sub-agents) or `answer` (provide direct response). 
+- Homogeneous Ensemble: A task/query is passed to N separate agents who each provide a response. If `refinement_strategy` is set to "similarity", the response with the highest cross-similarity (euclidean distance) is chosen. If `refinement_strategy` == 'agent', all the responses are passed to a user-defined agent that is tasked with distilling the responses into a cohesive final output. 
+
 
 ------- 
 
 ## Example
 
-
-
------- 
-
-## Running Locally 
+#### Running Locally 
 
 
 1. Clone repo and stand up virtual env 
@@ -33,9 +30,9 @@ The process runs recursively until all tasks/sub-tasks are completed – all in
 4. Run a task:  
 
 ```python
-from marshall.core.agent import Agent 
-from marshall.core.tools import Toolkit # holds user-defined tools 
-from marshall.llms.gpt import GPT # gpt class  
+from marshall.core.pipelines import enemble, delegation  
+from marshall.llms import gpt, claude # gpt and claude are both supported  
+from marshall.core.tools import Toolkit # class that holds user-defined tools 
 
 # define some tools 
 def large_number_adder(a, b):
@@ -58,18 +55,7 @@ tk.add_tool(
 
 task = "..."  
 
-ag = Agent(
-    base_model=GPT(model_name="gpt-4-0125-preview", 
-         api_key=os.getenv("OPENAI_API_KEY"), 
-         config={"temperature": 0.2, "response_format": {'type': 'json_object'}}), 
-    subagent_model=GPT(model_name="gpt-3.5-turbo-0125", 
-         api_key=os.getenv("OPENAI_API_KEY"), 
-         config={"temperature": 0.2, "response_format": {'type': 'json_object'}}), 
-    refiner_model=GPT(model_name="gpt-3.5-turbo-0125", 
-         api_key=os.getenv("OPENAI_API_KEY"), 
-         config={"temperature": 0.2, "response_format": {'type': 'json_object'}}), 
-    toolkit=tk
-) 
+
 ```
 
 
