@@ -41,17 +41,30 @@ def large_number_adder(a, b):
 def multipler(a, b):
     return a * b 
 
-tk = Toolkit() 
+def random_joke(): 
+
+    import requests
+
+    response = requests.get('https://official-joke-api.appspot.com/jokes/random')
+    joke = response.json() 
+
+    return f"{joke.get('setup')} {joke.get('punchline')}"
+
+tk = Toolkit()  
+
 tk.add_tool(
     func=large_number_adder,
-    tool_name='large_number_adder',
     tool_desc='Adds two large numbers. Use like large_number_adder(a=1, b=2)',
 ) 
 tk.add_tool(
     func=multipler,
-    tool_name='multipler',
     tool_desc='Multiplies two numbers. Use like multipler(a=1, b=2)',
+) 
+tk.add_tool(
+    func=random_joke, 
+    tool_desc="returns a joke (string)"
 )
+
 
 task = "..."  
 
@@ -62,7 +75,7 @@ task = "..."
 TODO
 
 - [ ] build out delegation pipeline 
-- [ ] expand toolkit for use in both ensemble and delegation pipelines 
+- [ ] expand toolkit for use in with any LLM class 
 - [ ] rag func examples 
 
 

@@ -39,7 +39,7 @@ class GPT(LLM):
         if self.toolkit: 
             # add instructions for how to use tools 
             tool_desc = utils.get_tool_str(self.toolkit.tool_dict) 
-            tool_str = "You also have access to the following tools (python functions available in your environment), use these as needed whenever you want: " + tool_desc + "\n\n-------\nIf/when you use these tools, make sure to still store the final output in a variable called `result`"
+            tool_str = "You also have access to the following tools (python functions available in your environment), use these as needed whenever you want: " + tool_desc + "\n\n-------\nIf/when you use these tools, make sure to still store the final output in a variable called `result`"  
             self.add_sys_instructions(tool_str) 
             # store exectuable tool import str 
             self.tool_import_str = utils.build_tool_import_str(self.toolkit.tool_dict)

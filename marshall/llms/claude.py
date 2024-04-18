@@ -111,9 +111,11 @@ class Claude(LLM):
                 
             if obj.get('content_type') == 'code': 
                 # execute code 
-                code_str = self.tool_import_str + obj.get('content', "result = 'No code provided' ; print(result)")
+                code_str = self.tool_import_str + obj.get('content', "result = 'No code provided' ; print(result)")  
+                if verbose: print('code to execute: ', obj.get('content', "result = 'No code provided' ; print(result)"))
+                if verbose: print('executing: ', code_str)
                 code_result = utils.exec_code(code_str) 
-                output_str = f"Executed the following code:\n```python\n{code_str}```\n\nResult: {code_result}"
+                output_str = f"Executed the following code:\n```python\n{code_str}```\n\nResult: {code_result}" 
 
                 return output_str  
             else:  

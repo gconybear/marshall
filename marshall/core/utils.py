@@ -3,21 +3,27 @@ import contextlib
 import random
 import math 
 
-# def exec_code(code: str): 
-#     namespace = {}
-#     exec(code, namespace)
-
-def exec_code(code):
-    with io.StringIO() as buf, contextlib.redirect_stdout(buf):
-        # Include common libraries in the namespace for 'exec'
-        namespace = {
+def exec_code(code: str): 
+    namespace = {
             "__builtins__": __builtins__,
             "random": random,
             "math": math,
         }
-        exec(code, namespace)
-        output = buf.getvalue()
-    return output 
+    exec(code, namespace) 
+    output = namespace.get('result', None) 
+    return output
+
+# def exec_code(code):
+#     with io.StringIO() as buf, contextlib.redirect_stdout(buf):
+#         # Include common libraries in the namespace for 'exec'
+#         namespace = {
+#             "__builtins__": __builtins__,
+#             "random": random,
+#             "math": math,
+#         }
+#         exec(code, namespace)
+#         output = buf.getvalue()
+#     return output 
 
 def get_tool_str(tool_dict: dict) -> str: 
 
