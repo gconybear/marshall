@@ -49,13 +49,15 @@ class Claude(LLM):
             self.tool_import_str = ''
 
     def api_call(self, payload: dict, version='2023-06-01') -> dict:   
-        
 
         headers = {
             'x-api-key': self.api_key,
             'anthropic-version': version,
-            'content-type': 'application/json',
-        }
+            'content-type': 'application/json'
+        } 
+
+        if self.toolkit: 
+            headers.update({'anthropic-beta': 'tools-2024-04-04'})
         
         response = requests.request("POST", self.messages_url, headers=headers, data=payload)
         return response.json()   
@@ -87,9 +89,12 @@ class Claude(LLM):
             'messages': mssg
         }  
 
-        data.update(self.config)
+        # if self.toolkit: 
+        #     data.update({"tools": self.toolkit.tool_list})  
 
-        res = self.api_call(payload=json.dumps(data))   
+        data.update(self.config)
+ 
+        res = self.api_call(payload=json.dumps(data))    
 
         if verbose: 
             print(res) 
